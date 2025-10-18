@@ -264,6 +264,39 @@
             background: #0abde3;
         }
 
+        .response-header {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .response-header.success {
+            color: #155724;
+        }
+
+        .response-header.error {
+            color: #721c24;
+        }
+
+        .status-code {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .status-code.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-code.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .file-input-wrapper {
             position: relative;
             overflow: hidden;
@@ -335,10 +368,9 @@
         <div class="modal" id="dataModal">
             <div class="modal-content">
                 <button class="modal-close" onclick="closeModal()">×</button>
-                <h2>📦 Dados Preparados para Envio</h2>
-                <p style="margin: 15px 0; color: #666;">Copie estes dados e envie manualmente para seu webhook ou backend:</p>
+                <div id="modalHeader"></div>
                 <div class="json-display" id="jsonDisplay"></div>
-                <button class="copy-btn" onclick="copyJSON()">📋 Copiar JSON</button>
+                <button class="copy-btn" onclick="copyJSON()">📋 Copiar Resposta</button>
             </div>
         </div>
     </div>
@@ -462,27 +494,42 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(payload),
-                    mode: 'no-cors' // Evita erro de CORS
+                    body: JSON.stringify(payload)
                 });
 
-                // Como usamos no-cors, sempre mostra sucesso e exibe os dados
                 console.log('📤 Dados enviados para o webhook:');
                 console.log(JSON.stringify(payload, null, 2));
                 
-                showStatus(`✅ ${postsData.length} postagem(ns) preparada(s)! Verifique o console (F12) para ver os dados`, 'success');
+                // Tenta ler a resposta do servidor
+                let serverResponse;
+                try {
+                    serverResponse = await response.json();
+                } catch (e) {
+                    serverResponse = await response.text();
+                }
+
+                console.log('📥 Resposta do servidor:');
+                console.log(serverResponse);
                 
-                // Mostra modal com os dados
-                showDataModal(payload);
+                if (response.ok) {
+                    showStatus(`✅ ${postsData.length} postagem(ns) enviada(s) com sucesso!`, 'success');
+                    showResponseModal(serverResponse, true, response.status);
+                } else {
+                    showStatus(`⚠️ Servidor respondeu com erro (${response.status})`, 'error');
+                    showResponseModal(serverResponse, false, response.status);
+                }
                 
             } catch (error) {
-                console.log('📤 Dados que seriam enviados:');
-                console.log(JSON.stringify(payload, null, 2));
+                console.log('❌ Erro ao enviar:');
+                console.log(error);
                 
-                showStatus(`✅ ${postsData.length} postagem(ns) preparada(s)! Verifique o console (F12) para ver os dados`, 'success');
+                showStatus('❌ Erro de conexão: ' + error.message, 'error');
                 
-                // Mostra modal com os dados mesmo em caso de erro
-                showDataModal(payload);
+                // Mostra modal com o erro e os dados que seriam enviados
+                showResponseModal({
+                    error: error.message,
+                    dados_enviados: payload
+                }, false, 0);
             }
         }
 
@@ -509,7 +556,40 @@
         function showDataModal(payload) {
             const modal = document.getElementById('dataModal');
             const jsonDisplay = document.getElementById('jsonDisplay');
+            const modalHeader = document.getElementById('modalHeader');
+            
+            modalHeader.innerHTML = `
+                <h2>📦 Dados Enviados</h2>
+                <p style="margin: 15px 0; color: #666;">Dados que foram enviados para o webhook:</p>
+            `;
+            
             jsonDisplay.textContent = JSON.stringify(payload, null, 2);
+            modal.style.display = 'flex';
+        }
+
+        function showResponseModal(response, isSuccess, statusCode) {
+            const modal = document.getElementById('dataModal');
+            const jsonDisplay = document.getElementById('jsonDisplay');
+            const modalHeader = document.getElementById('modalHeader');
+            
+            const statusClass = isSuccess ? 'success' : 'error';
+            const icon = isSuccess ? '✅' : '❌';
+            const title = isSuccess ? 'Sucesso!' : 'Erro na Resposta';
+            
+            modalHeader.innerHTML = `
+                <div class="response-header ${statusClass}">
+                    <h2>${icon} ${title}</h2>
+                    ${statusCode > 0 ? `<span class="status-code ${statusClass}">Status: ${statusCode}</span>` : ''}
+                </div>
+                <p style="margin: 15px 0; color: #666;">Resposta do servidor:</p>
+            `;
+            
+            if (typeof response === 'object') {
+                jsonDisplay.textContent = JSON.stringify(response, null, 2);
+            } else {
+                jsonDisplay.textContent = response;
+            }
+            
             modal.style.display = 'flex';
         }
 
