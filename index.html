@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendador de Postagens</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        input[type="datetime-local"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .post-item {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .post-item:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .post-number {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .remove-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .remove-btn:hover {
+            background: #e84118;
+            transform: translateY(-2px);
+        }
+
+        .add-post-btn {
+            background: #48dbfb;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .add-post-btn:hover {
+            background: #0abde3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 219, 251, 0.3);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .posts-container {
+            margin-bottom: 20px;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-input-label {
+            display: block;
+            padding: 12px 15px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .file-input-label:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .file-name {
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Agendador de Postagens</h1>
+        <p class="subtitle">Configure suas postagens e envie para o webhook</p>
+
+        <div class="form-group">
+            <label for="webhookUrl">🔗 URL do Webhook</label>
+            <input type="text" id="webhookUrl" placeholder="https://seu-webhook.com/endpoint" required>
+        </div>
+
+        <div class="posts-container" id="postsContainer">
+            <!-- Posts serão adicionados aqui dinamicamente -->
+        </div>
+
+        <button class="add-post-btn" onclick="addPost()">➕ Adicionar Postagem</button>
+
+        <button class="submit-btn" onclick="submitPosts()">🚀 Enviar para Webhook</button>
+
+        <div class="status-message" id="statusMessage"></div>
+    </div>
+
+    <script>
+        let postCount = 0;
+        let posts = [];
+
+        function addPost() {
+            postCount++;
+            const postId = `post-${postCount}`;
+            
+            const postHtml = `
+                <div class="post-item" id="${postId}">
+                    <div class="post-number">${postCount}</div>
+                    <div class="form-group">
+                        <label>📝 Mensagem</label>
+                        <textarea class="post-message" placeholder="Digite a mensagem da postagem..." rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>🖼️ Imagem/Vídeo (opcional)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" class="post-media" accept="image/*,video/*" onchange="handleFileSelect(this)">
+                            <label class="file-input-label" onclick="this.previousElementSibling.click()">
+                                Clique para selecionar arquivo
+                            </label>
+                            <div class="file-name"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>🕐 Data e Hora</label>
+                        <input type="datetime-local" class="post-datetime" required>
+                    </div>
+                    <button class="remove-btn" onclick="removePost('${postId}')">🗑️ Remover</button>
+                </div>
+            `;
+            
+            document.getElementById('postsContainer').insertAdjacentHTML('beforeend', postHtml);
+        }
+
+        function handleFileSelect(input) {
+            const fileName = input.files[0]?.name || '';
+            const fileNameDisplay = input.parentElement.querySelector('.file-name');
+            if (fileName) {
+                fileNameDisplay.textContent = `📎 ${fileName}`;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        }
+
+        function removePost(postId) {
+            const post = document.getElementById(postId);
+            if (post) {
+                post.remove();
+            }
+        }
+
+        async function submitPosts() {
+            const webhookUrl = document.getElementById('webhookUrl').value.trim();
+            const statusMessage = document.getElementById('statusMessage');
+            
+            if (!webhookUrl) {
+                showStatus('Por favor, insira a URL do webhook', 'error');
+                return;
+            }
+
+            const postItems = document.querySelectorAll('.post-item');
+            
+            if (postItems.length === 0) {
+                showStatus('Adicione pelo menos uma postagem', 'error');
+                return;
+            }
+
+            const postsData = [];
+
+            for (let item of postItems) {
+                const message = item.querySelector('.post-message').value.trim();
+                const datetime = item.querySelector('.post-datetime').value;
+                const mediaInput = item.querySelector('.post-media');
+                
+                if (!message || !datetime) {
+                    showStatus('Preencha todos os campos obrigatórios', 'error');
+                    return;
+                }
+
+                const postData = {
+                    message: message,
+                    scheduled_time: datetime,
+                    media: null
+                };
+
+                if (mediaInput.files[0]) {
+                    const file = mediaInput.files[0];
+                    const base64 = await fileToBase64(file);
+                    postData.media = {
+                        filename: file.name,
+                        type: file.type,
+                        size: file.size,
+                        data: base64
+                    };
+                }
+
+                postsData.push(postData);
+            }
+
+            const payload = {
+                webhook_url: webhookUrl,
+                posts: postsData,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    showStatus(`✅ ${postsData.length} postagem(ns) enviada(s) com sucesso!`, 'success');
+                    setTimeout(() => {
+                        document.getElementById('postsContainer').innerHTML = '';
+                        document.getElementById('webhookUrl').value = '';
+                        postCount = 0;
+                    }, 2000);
+                } else {
+                    showStatus('❌ Erro ao enviar para o webhook', 'error');
+                }
+            } catch (error) {
+                showStatus('❌ Erro de conexão: ' + error.message, 'error');
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = `status-message status-${type}`;
+            statusMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        // Adicionar primeira postagem automaticamente
+        addPost();
+    </script>
+</body>
+</html>
